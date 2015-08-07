@@ -1,0 +1,95 @@
+<!doctype html>
+<html ng-app="disasterSummer">
+<head>
+  <title>災情地圖</title>
+  <meta property="og:image" content="./images/disasterMap'.png">
+  <meta property="og:title" content="災情地圖">
+  <meta property="og:description" content="點擊標記，顯示該地點的災情。">
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular.min.js"></script>
+  <script type="text/javascript" src="./javascripts/lodash.min.js"></script>
+  <script type="text/javascript" src="./javascripts/angular-google-maps.min.js"></script>
+  <script type="text/javascript" src='https://maps.googleapis.com/maps/api/js?sensor=false'></script>
+  <script type="text/javascript">
+    angular.module('disasterSummer', ['uiGmapgoogle-maps'])
+      .config(
+        ['uiGmapGoogleMapApiProvider', function(GoogleMapApiProviders) {
+          GoogleMapApiProviders.configure({
+            china: true
+          });
+        }]
+      )
+      .controller("showDisasters", function($scope, $http, uiGmapGoogleMapApi) {
+        $scope.map = { 
+          center: { latitude: 25.0172264, longitude: 121.506378 }, 
+          zoom: 11,
+          markersEvents: {
+              click: function(marker, eventName, model, arguments) {
+                  $scope.map.window.model = model;
+                  $scope.map.window.model.detail = {
+                    CaseComplete : $scope.disasters[model.id].CaseComplete[0],
+                    CaseDescription : $scope.disasters[model.id].CaseDescription[0],
+                    CaseLocationDescription : $scope.disasters[model.id].CaseLocationDescription[0],
+                    CaseLocationDistrict : $scope.disasters[model.id].CaseLocationDistrict[0],
+                    CaseTime : $scope.disasters[model.id].CaseTime[0],
+                    DPName : $scope.disasters[model.id].DPName[0],
+                    Name : $scope.disasters[model.id].Name[0],
+                    PName : $scope.disasters[model.id].PName[0]
+                  }
+                  $scope.map.window.show = true;
+              }
+          },
+          window: {
+              marker: {},
+              show: false,
+              closeClick: function() {
+                  this.show = false;
+              },
+              options: {} // define when map is ready
+          }
+        };
+        $scope.getDisasters = function() {
+          $http.get("https://tcgbusfs.blob.core.windows.net/blobfs/GetDisasterSummary.json")
+            .success(function(data, status, headers, config) {
+              $scope.disasters = data["DataSet"]["diffgr:diffgram"][0]["NewDataSet"][0]["CASE_SUMMARY"];
+              $scope.markers = new Array();
+              $scope.disasters.map(function(obj, index){
+                $scope.markers.push( 
+                  {
+                    id: index,
+                    latitude: obj.Wgs84Y,
+                    longitude: obj.Wgs84X
+                  }
+                );
+              });
+              console.log($scope.disasters);
+            })
+            .error(function(data, status, headers, config) {
+
+            })
+        }
+        $scope.getDisasters();
+      })
+  </script>
+  <style type="text/css">
+    .angular-google-map-container { height: 800px; }
+  </style>
+</head>
+<body style="padding: 15px 30px;">
+  <div style="margin: 15px auto;" ng-controller="showDisasters">
+      <div ng-cloak>災情總數: {{disasters.length}}</div>
+    <ui-gmap-google-map center='map.center' zoom='map.zoom'>
+        <ui-gmap-window show="map.window.show" coords="map.window.model" options="map.window.options" closeclick="map.window.closeClick()">
+            <div>
+              <p>案件情況: {{map.window.model.detail.CaseComplete == "true" ? "已完成" : "未完成"}}</p>
+              <p>案件地點: 台北市 {{map.window.model.detail.CaseLocationDistrict + map.window.model.detail.CaseLocationDescription}}</p>
+              <p>發生時間: {{map.window.model.detail.CaseTime}}</p>
+              <p>案件起因: {{map.window.model.detail.DPName}}</p>
+              <p>案件類別: {{map.window.model.detail.PName + " - " + map.window.model.detail.Name}}</p>
+              <p>案件詳情: {{map.window.model.detail.CaseDescription}}</p>
+            </div>
+        </ui-gmap-window>
+        <ui-gmap-markers idkey="'id'" models="markers" coords="'self'" icon="'./images/pin56.svg'" events="map.markersEvents" ></ui-gmap-markers>
+    </ui-gmap-google-map>
+  </div>
+</body>
+</html>
