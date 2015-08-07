@@ -2,6 +2,7 @@
 <html ng-app="disasterSummer">
 <head>
   <title>災情地圖</title>
+  <meta charset="UTF-8">
   <meta property="og:image" content="./images/disasterMap'.png">
   <meta property="og:title" content="災情地圖">
   <meta property="og:description" content="點擊標記，顯示該地點的災情。">
@@ -21,11 +22,12 @@
       .controller("showDisasters", function($scope, $http, uiGmapGoogleMapApi) {
         $scope.filterDataScope = {
           districts: ['中正區', '大同區', '中山區', '松山區', '大安區', '萬華區', '信義區', '士林區', '北投區', '內湖區', '南港區', '文山區'],
-          completes: [{status:'true', statusDescription:'已結案'}, {status:'false', statusDescription:'未結案'}]
+          completes: [{status:'true', statusDescription:'已結案'}, {status:'false', statusDescription:'未結案'}],
+          PNameList: new Array()
         };
         $scope.currentFilterData = {
           currentDistrict: -1,
-          currentComplete: -1
+          currentComplete: 1
         }
         $scope.map = { 
           center: { latitude: 25.0172264, longitude: 121.506378 }, 
@@ -56,21 +58,33 @@
           }
         };
         $scope.getDisasters = function() {
-          $http.get("https://tcgbusfs.blob.core.windows.net/blobfs/GetDisasterSummary.json")
+          $http({
+            method: "GET",
+            url: "https://tcgbusfs.blob.core.windows.net/blobfs/GetDisasterSummary.json",
+            headers: {
+              'Content-Type': 'application/json; charset=UTF-8'
+            },
+            cache: false
+          })
+          // $http.get("https://tcgbusfs.blob.core.windows.net/blobfs/GetDisasterSummary.json")
             .success(function(data, status, headers, config) {
               $scope.disasters = data["DataSet"]["diffgr:diffgram"][0]["NewDataSet"][0]["CASE_SUMMARY"];
               $scope.markers = new Array();
-              console.log($scope.currentComplete)
-              if($scope.currentFilterData.currentDistrict > -1) {
+              if($scope.currentFilterData.currentDistrict > -1 && $scope.currentFilterData.currentDistrict < 999) {
                 $scope.disasters = $scope.disasters.filter(function(disaster) {
                   return disaster.CaseLocationDistrict[0].indexOf($scope.filterDataScope.districts[$scope.currentFilterData.currentDistrict]) > -1;
                 });
               }
-              if($scope.currentFilterData.currentComplete > -1) {
+              if($scope.currentFilterData.currentComplete > -1 && $scope.currentFilterData.currentComplete < 999) {
                 $scope.disasters = $scope.disasters.filter(function(disaster) {
                   return disaster.CaseComplete[0].indexOf($scope.filterDataScope.completes[$scope.currentFilterData.currentComplete].status) > -1;
                 });
               }
+              if($scope.currentFilterData.currentPName > -1 && $scope.currentFilterData.currentPName < 999) {
+                $scope.disasters = $scope.disasters.filter(function(disaster) {
+                  return disaster.PName[0].indexOf($scope.filterDataScope.PNameList[$scope.currentFilterData.currentPName]) > -1;
+                });
+              }              
               $scope.disasters.map(function(obj, index){
                 $scope.markers.push( 
                   {
@@ -79,7 +93,10 @@
                     longitude: obj.Wgs84X
                   }
                 );
+                if($scope.filterDataScope.PNameList.indexOf(obj.PName[0]) == -1 && obj.PName[0].indexOf("�") == -1)
+                  $scope.filterDataScope.PNameList.push(obj.PName[0])
               });
+              console.log($scope.filterDataScope.PNameList)
             })
             .error(function(data, status, headers, config) {
 
@@ -107,10 +124,15 @@
      <div ng-cloak ng-controller="disasterFilter">
       <select ng-model="currentFilterData.currentDistrict" ng-options="index as district for (index, district) in filterDataScope.districts" ng-change="filterData()">
         <option value="">行政區</option>
+        <option value="999">全區</option>
       </select>
-      <select ng-model="currentFilterData.currentComplete" ng-options="index as complete.statusDescription for (index, complete) in filterDataScope.completes" ng-change="filterData()">
+      <select ng-model="currentFilterData.currentPName" ng-options="index as PName for (index, PName) in filterDataScope.PNameList" ng-change="filterData()">
+        <option value="">災情類別</option>
+        <option value="999">所有類別</option>
+      </select>
+ <!--      <select ng-init="currentFilterData.currentComplete" ng-model="currentFilterData.currentComplete" ng-options="index as complete.statusDescription for (index, complete) in filterDataScope.completes" ng-change="filterData()" ng-selected="1">
         <option value="">結案狀態</option>
-      </select>
+      </select> -->
      </div>
     </div>
     <ui-gmap-google-map center='map.center' zoom='map.zoom'>
