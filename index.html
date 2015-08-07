@@ -74,8 +74,9 @@
     .angular-google-map-container { height: 800px; }
   </style>
 </head>
-<body style="padding: 30px 50px;">
-  <div style="margin: 30px auto;" ng-controller="showDisasters">
+<body style="padding: 15px 30px;">
+  <div style="margin: 15px auto;" ng-controller="showDisasters">
+      <div ng-cloak>災情總數: {{disasters.length}}</div>
     <ui-gmap-google-map center='map.center' zoom='map.zoom'>
         <ui-gmap-window show="map.window.show" coords="map.window.model" options="map.window.options" closeclick="map.window.closeClick()">
             <div>
