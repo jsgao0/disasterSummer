@@ -124,17 +124,19 @@
     <div>
      <div ng-cloak>災情總數: {{disasters.length}}</div>
      <div ng-cloak ng-controller="disasterFilter">
-      <select ng-model="currentFilterData.currentDistrict" ng-options="index as district for (index, district) in filterDataScope.districts" ng-change="filterData()">
-        <option value="">行政區</option>
-        <option value="999">全區</option>
-      </select>
-      <select ng-model="currentFilterData.currentPName" ng-options="index as PName for (index, PName) in filterDataScope.PNameList" ng-change="filterData()">
-        <option value="">災情類別</option>
-        <option value="999">所有類別</option>
-      </select>
- <!--      <select ng-init="currentFilterData.currentComplete" ng-model="currentFilterData.currentComplete" ng-options="index as complete.statusDescription for (index, complete) in filterDataScope.completes" ng-change="filterData()" ng-selected="1">
-        <option value="">結案狀態</option>
-      </select> -->
+      <div style="margin: 10px auto;">
+        <select ng-model="currentFilterData.currentDistrict" ng-options="index as district for (index, district) in filterDataScope.districts" ng-change="filterData()">
+          <option value="">行政區</option>
+          <option value="999">全區</option>
+        </select>
+        <select ng-model="currentFilterData.currentPName" ng-options="index as PName for (index, PName) in filterDataScope.PNameList" ng-change="filterData()">
+          <option value="">災情類別</option>
+          <option value="999">所有類別</option>
+        </select>
+   <!--      <select ng-init="currentFilterData.currentComplete" ng-model="currentFilterData.currentComplete" ng-options="index as complete.statusDescription for (index, complete) in filterDataScope.completes" ng-change="filterData()" ng-selected="1">
+          <option value="">結案狀態</option>
+        </select> -->
+      </div>
      </div>
     </div>
     <ui-gmap-google-map center='map.center' zoom='map.zoom'>
